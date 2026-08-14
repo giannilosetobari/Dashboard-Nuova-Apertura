@@ -4,12 +4,12 @@ import pandas as pd
 st.set_page_config(page_title="Dashboard CDA", layout="wide")
 st.title("📊 Dashboard Analitica CDA 2026")
 
-# Caricamento sicuro del file Excel rinominato
+# Caricamento del file Excel senza vincoli rigidi sul nome del foglio
 try:
-    df = pd.read_excel('dati.xlsx', sheet_name='APRI')
+    df = pd.read_excel('dati.xlsx', sheet_name=0)
     st.sidebar.success("File Excel caricato con successo!")
 except Exception as e:
-    st.sidebar.error("Errore nel caricamento del file Excel.")
+    st.sidebar.error(f"Errore: {e}")
     st.stop()
 
 # Sidebar: Parametri
@@ -25,4 +25,4 @@ st.subheader("Analisi di Tesoreria (CFO)")
 if 'Saldo Banca' in df.columns:
     st.line_chart(df['Saldo Banca'])
 else:
-    st.info("Visualizzazione dati tabellari caricati correttamente.")
+    st.info("Dati tabellari caricati correttamente.")
