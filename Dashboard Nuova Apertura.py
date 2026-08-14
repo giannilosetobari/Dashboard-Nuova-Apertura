@@ -10,7 +10,7 @@ try:
     st.sidebar.success("File Excel caricato con successo!")
 except Exception as e:
     st.sidebar.error("Errore nel caricamento del file Excel.")
-    st.stop- if hasattr(st, 'stop') else st.stop()
+    st.stop()
 
 # Sidebar: Parametri
 st.sidebar.header("Parametri")
