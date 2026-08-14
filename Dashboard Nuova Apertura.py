@@ -1,28 +1,55 @@
 import streamlit as st
 import pandas as pd
 
-st.set_page_config(page_title="Dashboard CDA", layout="wide")
-st.title("📊 Dashboard Analitica CDA 2026")
+# --- CONFIGURAZIONE PAGINA ---
+st.set_page_config(page_title="Dashboard CDA 2026", layout="wide")
 
-# Caricamento del file Excel senza vincoli rigidi sul nome del foglio
+# --- CARICAMENTO DATI ---
+@st.cache_data
+def load_data():
+    # Assicurati che il file 'dati.xlsx' sia nella stessa cartella
+    df_apri = pd.read_excel('dati.xlsx', sheet_name='APRI')
+    df_calc = pd.read_excel('dati.xlsx', sheet_name='CALCOLI')
+    return df_apri, df_calc
+
 try:
-    df = pd.read_excel('dati.xlsx', sheet_name=0)
-    st.sidebar.success("File Excel caricato con successo!")
+    df_apri, df_calc = load_data()
 except Exception as e:
-    st.sidebar.error(f"Errore: {e}")
+    st.error(f"Errore nel caricamento file: {e}")
     st.stop()
 
-# Sidebar: Parametri
-st.sidebar.header("Parametri")
-incassi_base = st.sidebar.slider("Incassi A1", 4000, 10000, 4800)
+# --- SIDEBAR: LEVE DI INPUT ---
+st.sidebar.header("🎛️ Pannello di Controllo")
+incassi_a1 = st.sidebar.slider("Volume Incassi Anno 1 (€)", 4000, 8000, 4800, 100)
+margine = st.sidebar.slider("Margine Lordo (%)", 0.10, 0.30, 0.19, 0.01)
 
-# Visualizzazione Conto Economico
-st.subheader("Conto Economico di Progetto")
-st.dataframe(df, use_container_width=True)
+# --- MOTORE DI CALCOLO ---
+anni = ["Anno 1", "Anno 2", "Anno 3", "Anno 4"]
+fattori = [1.0, 1.104, 1.208, 1.243]
+incassi = [incassi_a1 * f for f in fattori]
+utile_op = [i * margine * 0.4 for i in incassi] # Esempio di calcolo derivato
 
-# Sezione Finanziaria di Controllo (CFO)
-st.subheader("Analisi di Tesoreria (CFO)")
-if 'Saldo Banca' in df.columns:
-    st.line_chart(df['Saldo Banca'])
-else:
-    st.info("Dati tabellari caricati correttamente.")
+df_sim = pd.DataFrame({
+    "Periodo": anni,
+    "Incassi": incassi,
+    "Margine Lordo": [i * margine for i in incassi],
+    "Utile Operativo": utile_op
+})
+
+# --- LAYOUT A TAB ---
+tab1, tab2, tab3 = st.tabs(["📈 Visione CEO", "🏦 Controllo CFO", "📑 Dati Grezzi"])
+
+with tab1:
+    st.subheader("Sintesi Economica Strategica")
+    st.metric("Fatturato Anno 4", f"€ {incassi[3]:,.2f}")
+    st.line_chart(df_sim.set_index("Periodo")[["Incassi", "Utile Operativo"]])
+    st.dataframe(df_sim)
+
+with tab2:
+    st.subheader("Analisi di Tesoreria")
+    st.info("Monitoraggio flussi di cassa e posizioni bancarie.")
+    st.bar_chart(df_sim.set_index("Periodo")["Utile Operativo"])
+
+with tab3:
+    st.subheader("Consultazione Excel")
+    st.dataframe(df_apri)
